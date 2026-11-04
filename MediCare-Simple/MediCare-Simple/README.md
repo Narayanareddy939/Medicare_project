@@ -50,21 +50,20 @@ Deploy the backend and frontend as separate services. Do not put the MongoDB con
 
 ### Backend on Render
 
-Create a **Web Service** from this repository and set its root directory to the folder containing `backend/package.json`.
+The repository root contains `render.yaml`. In Render, choose **New → Blueprint** and select this repository. The Blueprint creates the backend web service with its root directory, build/start commands, and `/api/health` check already configured.
 
-- Build command: `npm install`
-- Start command: `npm start`
-- Add environment variables:
+When prompted for the Blueprint's secret environment variables, enter:
   - `MONGODB_URI`: your MongoDB Atlas connection string (keep it private)
-  - `MONGODB_DB`: `medicare_simple` (optional; this is the default database name)
   - `ADMIN_EMAIL` and `ADMIN_PASSWORD`: credentials for the initial admin account
   - `CORS_ORIGINS`: your Vercel site origin, e.g. `https://your-app.vercel.app` (comma-separate additional origins)
 
-In Atlas, allow network access from the Render service. Render's outbound IPs may change, so configure Atlas Network Access according to your security requirements. After deployment, verify `https://your-render-service.onrender.com/api/health`.
+`MONGODB_DB` defaults to `medicare`. To use another database, change the value in `render.yaml`.
+
+In Atlas, add the Render service's **Outbound IP Addresses** (shown in the Render service settings) to **Security → Network Access**. If the Render connection times out but the same URI works locally, this IP allowlist is the first thing to check. For a quick connectivity test only, Atlas can temporarily allow `0.0.0.0/0`; remove that broad rule afterward and allow the Render outbound ranges instead. After deployment, verify `https://your-render-service.onrender.com/api/health`.
 
 ### Frontend on Vercel
 
-Import the same repository into Vercel and set the root directory to the folder containing `frontend/package.json`. Use the Vite defaults (`npm run build`, output directory `dist`) and add this build-time environment variable:
+The Vercel SPA rewrite config is at `MediCare-Simple/MediCare-Simple/frontend/vercel.json`. Import the repository into Vercel and set the project root directory to `MediCare-Simple/MediCare-Simple/frontend`. Use the Vite defaults (`npm run build`, output directory `dist`) and add this build-time environment variable:
 
 - `VITE_API_URL`: the Render backend origin, e.g. `https://your-render-service.onrender.com` (no trailing slash or `/api`)
 

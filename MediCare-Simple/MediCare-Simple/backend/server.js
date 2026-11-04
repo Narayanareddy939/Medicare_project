@@ -11,6 +11,7 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 4000;
 const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URI;
+const MONGO_SERVER_SELECTION_TIMEOUT_MS = Number(process.env.MONGO_SERVER_SELECTION_TIMEOUT_MS) || 10000;
 const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:4173')
   .split(',')
   .map(origin => origin.trim())
@@ -276,7 +277,8 @@ const startServer = async () => {
     }
 
     await mongoose.connect(MONGODB_URI, {
-      dbName: process.env.MONGODB_DB || 'medicare_simple'
+      dbName: process.env.MONGODB_DB || 'medicare_simple',
+      serverSelectionTimeoutMS: MONGO_SERVER_SELECTION_TIMEOUT_MS
     });
     console.log(`✅ MongoDB Connected to ${process.env.MONGODB_DB || 'medicare_simple'}`);
 
@@ -308,6 +310,8 @@ const startServer = async () => {
     }
     if (err.code === 18 || /bad auth|authentication failed/i.test(err.message)) {
       console.error('MongoDB Atlas rejected the database credentials. Check the database user in Atlas > Database Access and update MONGODB_URI in backend/.env.');
+    } else if (/whitelist|not authorized|IP access list|ECONNREFUSED|ETIMEDOUT/i.test(err.message)) {
+      console.error('MongoDB Atlas is not allowing this backend network. Add the Render service outbound IP ranges in Atlas > Network Access.');
     } else if (!hasServerErrors) {
       console.error(err.message);
     }
