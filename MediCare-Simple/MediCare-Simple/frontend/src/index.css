@@ -12,14 +12,14 @@
 
 :root {
   /* Brand Palette */
-  --primary:        #eb259c;
-  --primary-dark:   #1dd85847;
-  --primary-light:  #dbeafe;
-  --accent:         #06b6d4;
+  --primary:        #0f766e;
+  --primary-dark:   #115e59;
+  --primary-light:  #ccfbf1;
+  --accent:         #0891b2;
   --success:        #10b981;
   --warning:        #f59e0b;
   --danger:         #ef4444;
-  --purple:         #f65cdc;
+  --purple:         #7c3aed;
 
   /* Neutrals */
   --gray-50:  #f8fafc;
@@ -43,7 +43,7 @@
   --shadow-sm:  0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
   --shadow:     0 4px 16px rgba(0,0,0,.10);
   --shadow-lg:  0 10px 40px rgba(0,0,0,.14);
-  --shadow-glow: 0 0 0 4px rgba(37,99,235,.18);
+  --shadow-glow: 0 0 0 4px rgba(15,118,110,.18);
 
   /* Transitions */
   --trans: all .22s ease;
@@ -53,7 +53,7 @@ html { scroll-behavior: smooth; }
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: var(--gray-50);
+  background: #f5faf9;
   color: var(--gray-800);
   line-height: 1.6;
   min-height: 100vh;
@@ -113,6 +113,14 @@ a { text-decoration: none; color: inherit; }
   white-space: nowrap;
 }
 .btn:active { transform: scale(.97); }
+.btn:focus-visible,
+.nav-link:focus-visible,
+.mobile-menu-btn:focus-visible,
+a:focus-visible {
+  outline: 3px solid rgba(8,145,178,.45);
+  outline-offset: 3px;
+}
+.btn:disabled { cursor: not-allowed; opacity: .58; transform: none; }
 
 .btn-primary {
   background: var(--primary);
@@ -207,7 +215,7 @@ select.input { cursor: pointer; }
   top: 0;
   z-index: 100;
   height: var(--nav-h);
-  background: rgba(255,255,255,.92);
+  background: rgba(255,255,255,.96);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--gray-100);
@@ -281,7 +289,7 @@ select.input { cursor: pointer; }
 
 /* ── Hero ────────────────────────────────────────────────────── */
 .hero {
-  background: linear-gradient(135deg, #1e8a6b 0%, #0a399f 45%, #0891b2 100%);
+  background: linear-gradient(125deg, #134e4a 0%, #0f766e 48%, #0891b2 100%);
   color: #fff;
   padding: 80px 0 64px;
   position: relative;
@@ -325,9 +333,9 @@ select.input { cursor: pointer; }
   line-height: 1.1;
   margin-bottom: 20px;
 }
-.hero h1 em { color: #bfdbfe; font-style: normal; }
+.hero h1 em { color: #99f6e4; font-style: normal; }
 .hero p {
-  color: #bfdbfe;
+  color: #e0f2fe;
   font-size: 18px;
   margin-bottom: 36px;
   max-width: 560px;
@@ -335,14 +343,14 @@ select.input { cursor: pointer; }
 .hero-btns { display: flex; gap: 14px; flex-wrap: wrap; }
 .btn-hero-primary {
   background: #fff;
-  color: var(--primary);
+  color: var(--primary-dark);
   font-size: 15px;
   padding: 14px 30px;
   border-radius: 14px;
   font-weight: 700;
   box-shadow: 0 8px 24px rgba(0,0,0,.2);
 }
-.btn-hero-primary:hover { background: #dbeafe; }
+.btn-hero-primary:hover { background: #ccfbf1; }
 .btn-hero-outline {
   background: rgba(255,255,255,.15);
   border: 2px solid rgba(255,255,255,.35);
@@ -472,13 +480,13 @@ select.input { cursor: pointer; }
 
 /* ── CTA Banner ──────────────────────────────────────────────── */
 .cta-banner {
-  background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+  background: linear-gradient(125deg, #115e59 0%, #0f766e 58%, #0891b2 100%);
   color: #fff;
   padding: 64px 0;
   text-align: center;
 }
 .cta-banner h2 { font-size: 32px; color: #fff; margin-bottom: 12px; }
-.cta-banner p { color: #c7d2fe; font-size: 16px; margin-bottom: 32px; }
+.cta-banner p { color: #d5f5f2; font-size: 16px; margin-bottom: 32px; }
 
 /* ── Footer ──────────────────────────────────────────────────── */
 .footer {
@@ -491,13 +499,13 @@ select.input { cursor: pointer; }
 
 /* ── Page Header ─────────────────────────────────────────────── */
 .page-header {
-  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+  background: linear-gradient(125deg, #134e4a 0%, var(--primary) 65%, var(--accent) 100%);
   color: #fff;
   padding: 48px 0;
   margin-bottom: 48px;
 }
 .page-header h1 { color: #fff; font-size: 32px; }
-.page-header p { color: #bfdbfe; margin-top: 8px; }
+.page-header p { color: #d5f5f2; margin-top: 8px; }
 
 /* ── Appointments Page ───────────────────────────────────────── */
 .appt-table-wrap {
@@ -616,4 +624,16 @@ tbody tr:hover { background: var(--gray-50); }
   .hero h1 { font-size: 32px; }
   .stats-grid { grid-template-columns: 1fr 1fr; }
   .section-header h2 { font-size: 24px; }
+  .container { padding: 0 18px; }
+  .hero { padding: 64px 0 52px; }
+  .hero-btns > .btn { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
 }

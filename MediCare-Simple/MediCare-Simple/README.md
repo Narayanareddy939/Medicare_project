@@ -19,52 +19,64 @@
 - **Backend**: Node.js, Express.js
 - **Database**: MongoDB (Mongoose ORM)
 
-## 🚀 Getting Started
+## 🚀 Local Setup
 
-Follow these steps to run the MediCare Simple application locally.
+Requirements: Node.js 18+ and a MongoDB Atlas cluster (or local MongoDB).
 
-### Prerequisites
+1. In `backend`, copy `.env.example` to `.env` and set `MONGODB_URI` to the current connection string copied from **Atlas → Connect → Drivers**. Do not reuse shard hostnames from an old URI. Replace the username and password; URL-encode special characters in the password. In MongoDB Atlas, create a database user and allow the backend host in **Network Access**. If the backend logs `ENOTFOUND`, recopy the URI and confirm the cluster is active; if it reports an IP access-list error, add the backend machine's IP in Atlas **Network Access**.
+2. Start the backend:
 
-- [Node.js](https://nodejs.org/) (v16.0 or higher)
-- [MongoDB](https://www.mongodb.com/) (Running locally or configured via a connection string)
+   ```bash
+   cd backend
+   npm install
+   npm start
+   ```
 
-### 1. Clone the Repository
+   The API listens on `http://localhost:4000`. Check `http://localhost:4000/api/health` for the database connection status.
 
-```bash
-git clone https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPOSITORY_NAME.git
-cd YOUR_REPOSITORY_NAME
-```
+3. In a second terminal, start the frontend:
 
-### 2. Backend Setup
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
 
-Open a terminal and navigate to the `backend` directory.
+   Open `http://localhost:5173`. The Vite development proxy sends `/api` requests to the local backend.
 
-```bash
-cd backend
-npm install
-npm start
-```
+## ☁️ Deploying
 
-*The backend server will run on `http://localhost:4000`.*
-*Note: Ensure your local MongoDB instance is active on port `27017`.*
+Deploy the backend and frontend as separate services. Do not put the MongoDB connection string in the frontend.
 
-### 3. Frontend Setup
+### Backend on Render
 
-Open a **second** terminal and navigate to the `frontend` directory.
+Create a **Web Service** from this repository and set its root directory to the folder containing `backend/package.json`.
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+- Build command: `npm install`
+- Start command: `npm start`
+- Add environment variables:
+  - `MONGODB_URI`: your MongoDB Atlas connection string (keep it private)
+  - `MONGODB_DB`: `medicare_simple` (optional; this is the default database name)
+  - `ADMIN_EMAIL` and `ADMIN_PASSWORD`: credentials for the initial admin account
+  - `CORS_ORIGINS`: your Vercel site origin, e.g. `https://your-app.vercel.app` (comma-separate additional origins)
 
-*The frontend application will typically be accessible at `http://localhost:5173`.*
+In Atlas, allow network access from the Render service. Render's outbound IPs may change, so configure Atlas Network Access according to your security requirements. After deployment, verify `https://your-render-service.onrender.com/api/health`.
+
+### Frontend on Vercel
+
+Import the same repository into Vercel and set the root directory to the folder containing `frontend/package.json`. Use the Vite defaults (`npm run build`, output directory `dist`) and add this build-time environment variable:
+
+- `VITE_API_URL`: the Render backend origin, e.g. `https://your-render-service.onrender.com` (no trailing slash or `/api`)
+
+Redeploy after changing environment variables. Add the final Vercel origin to the Render `CORS_ORIGINS` value.
 
 ## 🔒 Default Admin Credentials
 
-Upon the first backend launch, a default admin is seeded automatically:
+If no admin exists when the backend starts, an admin is seeded. For local development the defaults are:
 - **Email:** `admin@medicare.com`
 - **Password:** `123` *(Note: Real sign-ups enforce strong password policies)*
+
+Set `ADMIN_EMAIL` and a strong `ADMIN_PASSWORD` in Render before connecting a new production database.
 
 ## 🤝 Contributing
 

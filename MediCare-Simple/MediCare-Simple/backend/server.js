@@ -6,8 +6,15 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 
+require('dotenv').config();
+
 const app = express();
-const PORT = 4000;
+const PORT = process.env.PORT || 4000;
+const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URI;
+const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:4173')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
 
 // ── Password Validation Helper 
 const isValidPassword = (password) => {
@@ -16,14 +23,14 @@ const isValidPassword = (password) => {
   return regex.test(password);
 };
 
-// ── Middleware 
-app.use(cors()); // Allow all frontend ports (5173, 5174, etc)
+// ── Middleware
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error(`Origin ${origin} is not allowed by CORS`));
+  }
+}));
 app.use(express.json());
-
-// ── Database Connection 
-mongoose.connect('mongodb://127.0.0.1:27017/medicare_simple')
-  .then(() => console.log('✅ MongoDB Connected to medicare_simple'))
-  .catch(err => console.log('❌ MongoDB Error:', err));
 
 // ── Mongoose Models ───────────────────────────────────────────
 const UserSchema = new mongoose.Schema({
@@ -48,6 +55,14 @@ const AppointmentSchema = new mongoose.Schema({
   status: { type: String, enum: ['pending', 'confirmed', 'cancelled'], default: 'pending' }
 });
 const Appointment = mongoose.model('Appointment', AppointmentSchema);
+
+app.get('/api/health', (req, res) => {
+  const connected = mongoose.connection.readyState === 1;
+  res.status(connected ? 200 : 503).json({
+    success: connected,
+    database: connected ? 'connected' : 'disconnected'
+  });
+});
 
 // ── AUTH ROUTES ───────────────────────────────────────────────
 
@@ -90,6 +105,25 @@ app.get('/api/doctors', async (req, res) => {
     // Map _id to id for frontend compatibility
     const mappedDocs = docs.map(d => ({ ...d.toObject(), id: d._id }));
     res.json({ success: true, data: mappedDocs });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+app.get('/api/stats', async (req, res) => {
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const [totalDoctors, availableDoctors, totalAppointments, confirmed] = await Promise.all([
+      User.countDocuments({ role: 'doctor' }),
+      User.countDocuments({ role: 'doctor', available: true }),
+      Appointment.countDocuments(),
+      Appointment.countDocuments({ status: 'confirmed', date: today })
+    ]);
+
+    res.json({
+      success: true,
+      data: { totalDoctors, availableDoctors, totalAppointments, confirmed }
+    });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
   }
@@ -237,22 +271,47 @@ app.delete('/api/appointments/:id', async (req, res) => {
 
 const startServer = async () => {
   try {
-    await mongoose.connect('mongodb://127.0.0.1:27017/medicare_simple');
-    console.log('✅ MongoDB Connected to medicare_simple');
+    if (!MONGODB_URI) {
+      throw new Error('Set MONGODB_URI in the backend environment before starting the server.');
+    }
+
+    await mongoose.connect(MONGODB_URI, {
+      dbName: process.env.MONGODB_DB || 'medicare_simple'
+    });
+    console.log(`✅ MongoDB Connected to ${process.env.MONGODB_DB || 'medicare_simple'}`);
 
     // Seed Admin
     const admin = await User.findOne({ role: 'admin' });
     if (!admin) {
-      await User.create({ name: 'Admin User', email: 'admin@medicare.com', password: '123', role: 'admin' });
-      console.log('✅ Default Admin seeded (admin@medicare.com / 123)');
+      const email = process.env.ADMIN_EMAIL || 'admin@medicare.com';
+      const password = process.env.ADMIN_PASSWORD || '123';
+      await User.create({ name: 'Admin User', email, password, role: 'admin' });
+      console.log(`✅ Default Admin seeded (${email})`);
     }
 
     app.listen(PORT, () => {
-      console.log(`\n🏥 MediCare Simple API (MongoDB) → http://localhost:${PORT}`);
+      console.log(`\n🏥 MediCare Simple API (MongoDB) listening on port ${PORT}`);
     });
   } catch (err) {
-    console.log('❌ Failed to start server or connect to MongoDB:', err.message);
-    console.log('💡 TIP: Make sure your MongoDB service is running!');
+    console.error('❌ Failed to start server or connect to MongoDB.');
+    let hasServerErrors = false;
+    if (err.reason?.servers) {
+      for (const [address, server] of err.reason.servers) {
+        if (server.error) {
+          hasServerErrors = true;
+          console.error(`MongoDB host ${address}: ${server.error.message}`);
+          if (server.error.code === 'ENOTFOUND' || server.error.message.includes('ENOTFOUND')) {
+            console.error('Copy the current connection string from MongoDB Atlas > Connect > Drivers and update MONGODB_URI.');
+          }
+        }
+      }
+    }
+    if (err.code === 18 || /bad auth|authentication failed/i.test(err.message)) {
+      console.error('MongoDB Atlas rejected the database credentials. Check the database user in Atlas > Database Access and update MONGODB_URI in backend/.env.');
+    } else if (!hasServerErrors) {
+      console.error(err.message);
+    }
+    process.exit(1);
   }
 };
 

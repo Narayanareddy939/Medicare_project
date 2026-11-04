@@ -3,8 +3,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
-
-const API_URL = 'http://localhost:4000/api';
+import { apiRequest } from '../api/api'
 
 export default function LoginPage() {
   const { login, toast } = useApp()
@@ -22,13 +21,10 @@ export default function LoginPage() {
 
     try {
       const endpoint = isRegister ? '/auth/register' : '/auth/login';
-      const res = await fetch(`${API_URL}${endpoint}`, {
+      const data = await apiRequest(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
       });
-      
-      const data = await res.json();
       
       if (data.success) {
         // ENFORCE PATIENT/USER ROLE
@@ -44,7 +40,7 @@ export default function LoginPage() {
         toast(data.message, 'error');
       }
     } catch (e) {
-      toast('Failed to connect to backend', 'error');
+      toast(e instanceof Error ? e.message : 'Login request failed', 'error');
     } finally {
       setLoading(false);
     }

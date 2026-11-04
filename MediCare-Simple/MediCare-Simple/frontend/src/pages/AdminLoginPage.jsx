@@ -3,8 +3,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
-
-const API_URL = 'http://localhost:4000/api';
+import { apiRequest } from '../api/api'
 
 export default function AdminLoginPage() {
   const { login, toast } = useApp()
@@ -20,13 +19,10 @@ export default function AdminLoginPage() {
     setLoading(true)
 
     try {
-      const res = await fetch(`${API_URL}/auth/login`, {
+      const data = await apiRequest('/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
       });
-      
-      const data = await res.json();
       
       if (data.success) {
         // ENFORCE ADMIN ROLE
@@ -42,7 +38,7 @@ export default function AdminLoginPage() {
         toast(data.message, 'error');
       }
     } catch (e) {
-      toast('Failed to connect to backend', 'error');
+      toast(e instanceof Error ? e.message : 'Login request failed', 'error');
     } finally {
       setLoading(false);
     }

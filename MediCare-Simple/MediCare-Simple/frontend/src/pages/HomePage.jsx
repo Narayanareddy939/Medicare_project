@@ -37,6 +37,7 @@ export default function HomePage() {
   const [doctors, setDoctors] = useState([])
   const [stats,   setStats]   = useState(null)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
 
   // ── Data fetch on mount ───────────────────────────────────
   useEffect(() => {
@@ -46,8 +47,8 @@ export default function HomePage() {
         const [docRes, statsRes] = await Promise.all([getDoctors(), getStats()])
         setDoctors(docRes.data.slice(0, 4))     // show top 4 only
         setStats(statsRes.data)
-      } catch {
-        // Silently fail on home page — data is optional here
+      } catch (e) {
+        setLoadError(e instanceof Error ? e.message : 'Could not load live data.')
       } finally {
         setLoading(false)
       }
@@ -164,11 +165,17 @@ export default function HomePage() {
                 </button>
               </div>
             </>
-          ) : (
+          ) : loadError ? (
             <div className="empty-state">
               <span className="icon">🩺</span>
               <h3>Backend not connected</h3>
-              <p>Start the Express server to see live doctor data</p>
+              <p>{loadError || 'Start the backend to see live doctor data.'}</p>
+            </div>
+          ) : (
+            <div className="empty-state">
+              <span className="icon">🩺</span>
+              <h3>No doctors listed yet</h3>
+              <p>Doctors added from the admin dashboard will appear here.</p>
             </div>
           )}
         </div>

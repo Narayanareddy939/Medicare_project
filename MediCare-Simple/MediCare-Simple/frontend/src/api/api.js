@@ -2,21 +2,42 @@
 // ─────────────────────────────────────────────────────────────
 // All backend calls live here (one place = easy to maintain)
 // In the full project these are split: doctorApi.js, appointmentApi.js, etc.
-// Base URL uses Vite proxy → /api → http://localhost:4000/api
+// In development Vite proxies /api to the local backend. In production,
+// VITE_API_URL points to the deployed backend origin.
 // ─────────────────────────────────────────────────────────────
 
-const BASE = '/api'
+export const API_BASE = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL.replace(/\/+$/, '')}/api`
+  : '/api'
 
-// Generic fetch helper — handles JSON + errors in one place
-async function request(path, options = {}) {
-  const res = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...options.headers },
-    ...options,
-  })
-  const data = await res.json()
+// Shared fetch helper — handles network, JSON, and HTTP errors consistently.
+export async function apiRequest(path, options = {}) {
+  let res
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      headers: { 'Content-Type': 'application/json', ...options.headers },
+      ...options,
+    })
+  } catch {
+    throw new Error(
+      'Cannot reach the backend. Start it and verify the MongoDB Atlas hostname and Network Access settings.'
+    )
+  }
+
+  let data
+  try {
+    data = await res.json()
+  } catch {
+    throw new Error(
+      `Backend is unavailable (HTTP ${res.status}). Check the backend logs and MongoDB Atlas connection.`
+    )
+  }
+
   if (!res.ok) throw new Error(data.message || 'Request failed')
   return data
 }
+
+const request = apiRequest
 
 // ── Doctors ───────────────────────────────────────────────────
 export const getDoctors      = (spec = '')  => request(`/doctors${spec ? `?spec=${spec}` : ''}`)

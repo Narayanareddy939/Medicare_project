@@ -2,15 +2,13 @@ import { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import Spinner from '../components/Spinner';
-import { getAppointments, cancelAppointment } from '../api/api';
+import { API_BASE } from '../api/api';
 
 const STATUS_BADGE = {
   confirmed: 'badge-success',
   pending: 'badge-warning',
   cancelled: 'badge-danger',
 };
-
-const API_URL = 'http://localhost:4000/api';
 
 export default function DashboardPage() {
   const { user, toast } = useApp();
@@ -29,17 +27,17 @@ export default function DashboardPage() {
     setLoading(true);
     try {
       // 1. Fetch appointments based on role
-      const res = await fetch(`${API_URL}/appointments?userId=${user.id}&role=${user.role}`);
+      const res = await fetch(`${API_BASE}/appointments?userId=${user.id}&role=${user.role}`);
       const data = await res.json();
       if (data.success) setAppointments(data.data);
 
       // 2. Fetch doctors if admin, OR fetch own profile if doctor to get availability
       if (user.role === 'admin') {
-        const docRes = await fetch(`${API_URL}/doctors`);
+        const docRes = await fetch(`${API_BASE}/doctors`);
         const docData = await docRes.json();
         if (docData.success) setDoctors(docData.data);
       } else if (user.role === 'doctor') {
-        const docRes = await fetch(`${API_URL}/doctors`);
+        const docRes = await fetch(`${API_BASE}/doctors`);
         const docData = await docRes.json();
         const me = docData.data.find(d => d.id === user.id);
         if (me) setIsAvailable(me.available);
@@ -62,7 +60,7 @@ export default function DashboardPage() {
   const handleCancelAppt = async (id) => {
     if (!window.confirm('Cancel this appointment?')) return;
     try {
-      await fetch(`${API_URL}/appointments/${id}`, { method: 'DELETE' });
+      await fetch(`${API_BASE}/appointments/${id}`, { method: 'DELETE' });
       setAppointments(prev => prev.filter(a => a.id !== id));
       toast('Appointment cancelled');
     } catch (e) {
@@ -73,7 +71,7 @@ export default function DashboardPage() {
   const toggleAvailable = async () => {
     const newStatus = !isAvailable;
     try {
-      const res = await fetch(`${API_URL}/doctors/${user.id}/availability`, {
+      const res = await fetch(`${API_BASE}/doctors/${user.id}/availability`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ available: newStatus })
@@ -89,7 +87,7 @@ export default function DashboardPage() {
 
   const handleUpdateStatus = async (id, status) => {
     try {
-      const res = await fetch(`${API_URL}/appointments/${id}/status`, {
+      const res = await fetch(`${API_BASE}/appointments/${id}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
@@ -107,7 +105,7 @@ export default function DashboardPage() {
   const handleAddDoctor = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${API_URL}/admin/doctors`, {
+      const res = await fetch(`${API_BASE}/admin/doctors`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(docForm)
@@ -128,7 +126,7 @@ export default function DashboardPage() {
   const handleDeleteDoctor = async (id) => {
     if (!window.confirm('Remove this doctor?')) return;
     try {
-      const res = await fetch(`${API_URL}/admin/doctors/${id}`, { method: 'DELETE' });
+      const res = await fetch(`${API_BASE}/admin/doctors/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setDoctors(prev => prev.filter(d => d.id !== id));
         toast('Doctor removed');

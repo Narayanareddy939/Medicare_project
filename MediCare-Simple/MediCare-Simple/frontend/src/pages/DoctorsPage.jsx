@@ -89,7 +89,7 @@ export default function DoctorsPage() {
           <div className="empty-state">
             <span className="icon">⚠️</span>
             <h3>Backend not connected</h3>
-            <p>Make sure the Express server is running on port 4000</p>
+            <p>Check that the backend is running and its MongoDB Atlas connection is configured.</p>
             <p style={{ fontSize: 12, marginTop: 8, color: 'var(--gray-400)' }}>{error}</p>
           </div>
         ) : visible.length === 0 ? (
