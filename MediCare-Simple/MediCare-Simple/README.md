@@ -57,6 +57,8 @@ When prompted for the Blueprint's secret environment variables, enter:
   - `ADMIN_EMAIL` and `ADMIN_PASSWORD`: credentials for the initial admin account
   - `CORS_ORIGINS`: your Vercel site origin, e.g. `https://your-app.vercel.app` (comma-separate additional origins)
 
+Do not set `PORT` to the Vercel URL. Render assigns a numeric `PORT` automatically. If you manually added `PORT=https://...` in the Render dashboard, delete that variable and put the Vercel origin in `CORS_ORIGINS` instead.
+
 `MONGODB_DB` defaults to `medicare`. To use another database, change the value in `render.yaml`.
 
 In Atlas, add the Render service's **Outbound IP Addresses** (shown in the Render service settings) to **Security → Network Access**. If the Render connection times out but the same URI works locally, this IP allowlist is the first thing to check. For a quick connectivity test only, Atlas can temporarily allow `0.0.0.0/0`; remove that broad rule afterward and allow the Render outbound ranges instead. After deployment, verify `https://your-render-service.onrender.com/api/health`.

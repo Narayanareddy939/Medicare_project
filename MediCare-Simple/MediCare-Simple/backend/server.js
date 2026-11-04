@@ -8,8 +8,14 @@ const mongoose = require('mongoose');
 
 require('dotenv').config();
 
+const portValue = process.env.PORT || '4000';
+const PORT = Number(portValue);
+if (!Number.isInteger(PORT) || PORT < 1 || PORT > 65535) {
+  console.error(`Invalid PORT value: "${portValue}". PORT must be a number; use CORS_ORIGINS for the Vercel URL.`);
+  process.exit(1);
+}
+
 const app = express();
-const PORT = process.env.PORT || 4000;
 const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URI;
 const MONGO_SERVER_SELECTION_TIMEOUT_MS = Number(process.env.MONGO_SERVER_SELECTION_TIMEOUT_MS) || 10000;
 const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:4173')
@@ -291,9 +297,11 @@ const startServer = async () => {
       console.log(`✅ Default Admin seeded (${email})`);
     }
 
-    app.listen(PORT, () => {
-      console.log(`\n🏥 MediCare Simple API (MongoDB) listening on port ${PORT}`);
+    await new Promise((resolve, reject) => {
+      const server = app.listen(PORT, () => resolve(server));
+      server.once('error', reject);
     });
+    console.log(`\n🏥 MediCare Simple API (MongoDB) listening on port ${PORT}`);
   } catch (err) {
     console.error('❌ Failed to start server or connect to MongoDB.');
     let hasServerErrors = false;
